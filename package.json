@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-chatluna-think-viewer",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "index.js",
   "description": "通过命令/关键词查阅 chatluna-character 最近一次回复中的 <think> 思考内容。",
   "license": "MIT",
