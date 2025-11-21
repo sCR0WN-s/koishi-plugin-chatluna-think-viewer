@@ -1,8 +1,8 @@
-{
+﻿{
   "name": "koishi-plugin-chatluna-think-viewer",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "main": "index.js",
-  "description": "通过命令/关键词查阅 chatluna-character 最近一次回复中的 <think> 思考内容。",
+  "description": "通过命令/关键词查看 chatluna-character 最近一次回复中的 <think> 思考内容。",
   "license": "MIT",
   "keywords": [
     "koishi",
@@ -24,7 +24,7 @@
   },
   "koishi": {
     "description": {
-      "zh": "通过命令/关键词查阅 chatluna-character 最近一次回复的 <think> 思考内容。",
+      "zh": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容。",
       "en": "Expose a command/shortcut to read the last <think> block from chatluna-character."
     },
     "service": {

@@ -1,4 +1,4 @@
-const { Schema } = require('koishi');
+﻿const { Schema } = require('koishi');
 
 const name = 'chatluna-think-viewer';
 
@@ -53,7 +53,12 @@ function formatThink(text) {
     const filtered = lines.filter((l, idx, arr) => !(l === '' && arr[idx - 1] === ''));
     const nonEmpty = filtered.filter((l) => l.trim().length > 0);
     const minIndent = nonEmpty.length
-      ? Math.min(...nonEmpty.map((l) => l.match(/^(\s*)/)?.[1]?.length ?? 0))
+      ? Math.min(
+          ...nonEmpty.map((l) => {
+            const m = l.match(/^(\s*)/);
+            return m ? m[1].length : 0;
+          }),
+        )
       : 0;
     return filtered.map((l) => l.slice(minIndent)).join('\n');
   }
@@ -75,25 +80,8 @@ function getNthAiMessage(messages, n = 1) {
     const msg = messages[i];
     const type = typeof msg?._getType === 'function' ? msg._getType() : msg?.type || msg?.role;
     if (type === 'ai' || type === 'assistant') {
-      count++;
+      count += 1;
       if (count === n) return msg;
-    }
-  }
-  return null;
-}
-
-function getNthThink(messages, n = 1) {
-  let count = 0;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    const type = typeof msg?._getType === 'function' ? msg._getType() : msg?.type || msg?.role;
-    if (type !== 'ai' && type !== 'assistant') continue;
-    const text = extractText(msg.content);
-    const thinkRaw = extractThink(text);
-    if (!thinkRaw) continue;
-    count += 1;
-    if (count === n) {
-      return { msg, think: formatThink(thinkRaw) };
     }
   }
   return null;
@@ -102,7 +90,7 @@ function getNthThink(messages, n = 1) {
 function apply(ctx, config) {
   const cmd = ctx
     .command(`${config.command} [index:string]`, '获取上一条回复中的 <think> 内容（可指定倒数第 N 条）')
-    .usage('不带参数默认读取最近一条；例如 think 2 读取倒数第二条 AI 回复的思考。');
+    .usage('不带参数默认读取最近一条；例如 think 2 读取倒数第二条 AI 回复的思考');
 
   for (const keyword of config.keywords || []) {
     cmd.shortcut(keyword, { prefix: false });
@@ -122,18 +110,21 @@ function apply(ctx, config) {
 
     const targetIndex = parseIndex(rawIndex ?? args?.[0]);
 
-    const result = getNthThink(messages, targetIndex);
-    if (!result) return `找不到倒数第 ${targetIndex} 条含 <think> 的 AI 回复记录。`;
-    const think = result.think;
+    const targetMessage = getNthAiMessage(messages, targetIndex);
+    if (!targetMessage) return config.emptyMessage;
+
+    const think = formatThink(extractThink(extractText(targetMessage.content)));
+    if (!think) return config.emptyMessage;
 
     if (config.renderImage && ctx.chatluna?.renderer) {
       try {
         const title = `### 上一条思考（倒数第 ${targetIndex} 条）`;
-        const rendered = await ctx.chatluna.renderer.render({
-          content: [
-            { type: 'text', text: `${title}\n\n\`\`\`\n${think}\n\`\`\`` },
-          ],
-        }, { type: 'image', session });
+        const rendered = await ctx.chatluna.renderer.render(
+          {
+            content: [{ type: 'text', text: `${title}\n\n\`\`\`\n${think}\n\`\`\`` }],
+          },
+          { type: 'image', session },
+        );
         if (rendered?.length) return rendered.map((r) => r.element);
       } catch (err) {
         ctx.logger?.warn?.('[think-viewer] image render failed, fallback text', err);
