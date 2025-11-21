@@ -59,6 +59,15 @@ function formatThink(text) {
   }
 }
 
+function parseIndex(rawIndex) {
+  if (!rawIndex) return 1;
+  if (typeof rawIndex === 'number' && Number.isFinite(rawIndex) && rawIndex > 0) return Math.floor(rawIndex);
+  const match = String(rawIndex).match(/\d+/);
+  if (!match) return 1;
+  const num = parseInt(match[0], 10);
+  return Number.isFinite(num) && num > 0 ? num : 1;
+}
+
 function getNthAiMessage(messages, n = 1) {
   if (!Array.isArray(messages) || n < 1) return null;
   let count = 0;
@@ -73,16 +82,33 @@ function getNthAiMessage(messages, n = 1) {
   return null;
 }
 
+function getNthThink(messages, n = 1) {
+  let count = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const type = typeof msg?._getType === 'function' ? msg._getType() : msg?.type || msg?.role;
+    if (type !== 'ai' && type !== 'assistant') continue;
+    const text = extractText(msg.content);
+    const thinkRaw = extractThink(text);
+    if (!thinkRaw) continue;
+    count += 1;
+    if (count === n) {
+      return { msg, think: formatThink(thinkRaw) };
+    }
+  }
+  return null;
+}
+
 function apply(ctx, config) {
   const cmd = ctx
-    .command(`${config.command} [index:number]`, '获取上一条回复中的 <think> 内容（可指定倒数第 N 条）')
+    .command(`${config.command} [index:string]`, '获取上一条回复中的 <think> 内容（可指定倒数第 N 条）')
     .usage('不带参数默认读取最近一条；例如 think 2 读取倒数第二条 AI 回复的思考。');
 
   for (const keyword of config.keywords || []) {
     cmd.shortcut(keyword, { prefix: false });
   }
 
-  cmd.action(async ({ session }, rawIndex) => {
+  cmd.action(async ({ session, args }, rawIndex) => {
     if (!config.allowPrivate && !session.guildId) {
       return '仅支持在群聊中查询。';
     }
@@ -94,17 +120,11 @@ function apply(ctx, config) {
     const messages = temp?.completionMessages || [];
     if (!messages.length) return config.emptyMessage;
 
-    let targetIndex = parseInt(rawIndex, 10);
-    if (!Number.isFinite(targetIndex) || targetIndex < 1) targetIndex = 1;
+    const targetIndex = parseIndex(rawIndex ?? args?.[0]);
 
-    const targetAi = getNthAiMessage(messages, targetIndex);
-    if (!targetAi) return `找不到倒数第 ${targetIndex} 条 AI 回复的记录。`;
-
-    const text = extractText(targetAi.content);
-    if (!text) return '未找到可解析的回复内容。';
-
-    const think = formatThink(extractThink(text));
-    if (!think) return config.emptyMessage || '上一次回复中没有 <think> 字段。';
+    const result = getNthThink(messages, targetIndex);
+    if (!result) return `找不到倒数第 ${targetIndex} 条含 <think> 的 AI 回复记录。`;
+    const think = result.think;
 
     if (config.renderImage && ctx.chatluna?.renderer) {
       try {
