@@ -119,9 +119,11 @@ function apply(ctx, config) {
     if (config.renderImage && ctx.chatluna?.renderer) {
       try {
         const title = `### 上一条思考（倒数第 ${targetIndex} 条）`;
+        const markdown = `<div align="center">\n${title}\n</div>\n\n<div align="left">\n${think}\n</div>`;
         const rendered = await ctx.chatluna.renderer.render(
           {
-            content: [{ type: 'text', text: `${title}\n\n\`\`\`\n${think}\n\`\`\`` }],
+            // 中间标题居中、正文左对齐，避免整段贴左侧
+            content: [{ type: 'text', text: markdown }],
           },
           { type: 'image', session },
         );
