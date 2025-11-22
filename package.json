@@ -1,20 +1,40 @@
-﻿{
+{
   "name": "koishi-plugin-chatluna-think-viewer",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "main": "index.js",
   "description": "Expose a command/shortcut to read the latest <think> block from chatluna-character.",
   "license": "MIT",
-  "keywords": ["koishi", "chatluna", "character", "think"],
+  "keywords": [
+    "koishi",
+    "chatluna",
+    "character",
+    "think"
+  ],
   "homepage": "https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer",
-  "repository": {"type": "git", "url": "git+https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer.git"},
-  "contributors": ["sCR0WN-s <2892511968@qq.com>"],
-  "peerDependencies": {"koishi": "^4.18.0", "koishi-plugin-chatluna-character": "^0.0.180"},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer.git"
+  },
+  "contributors": [
+    "sCR0WN-s <2892511968@qq.com>"
+  ],
+  "peerDependencies": {
+    "koishi": "^4.18.0",
+    "koishi-plugin-chatluna-character": "^0.0.180"
+  },
   "koishi": {
     "description": {
       "zh": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容。",
       "en": "Expose a command/shortcut to read the last <think> block from chatluna-character."
     },
-    "service": {"required": ["chatluna_character"]}
+    "service": {
+      "required": [
+        "chatluna_character"
+      ]
+    }
   },
-  "files": ["index.js", "README.md"]
+  "files": [
+    "index.js",
+    "README.md"
+  ]
 }
