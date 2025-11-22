@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-chatluna-think-viewer",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "main": "index.js",
   "description": "Expose a command/shortcut to read the latest <think> block from chatluna-character.",
   "license": "MIT",
