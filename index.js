@@ -37,8 +37,14 @@ function extractText(content) {
 }
 
 function extractThink(text) {
-  const match = text.match(/<think>([\s\S]*?)<\/think>/i);
-  return match?.[1]?.trim() ?? '';
+  // 有些模型/中间件会在同一条消息里多次输出 <think>，取最后一段避免误用旧片段
+  let last = '';
+  const regex = /<think>([\s\S]*?)<\/think>/gi;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    last = m[1];
+  }
+  return last.trim();
 }
 
 function formatThink(text) {
