@@ -18,27 +18,27 @@ const defaultForbidden = [
 
 const Config = Schema.intersect([
   Schema.object({
-    command: Schema.string().default('think').description('查看思考内容的指令名'),
-    keywords: Schema.array(Schema.string()).default(['查看思考', '上次思考']).description('可无前缀触发的关键词'),
-    allowPrivate: Schema.boolean().default(false).description('是否允许在私聊中使用'),
-    emptyMessage: Schema.string().default('暂时没有可用的思考记录。').description('没有记录时的提示文本'),
-    renderImage: Schema.boolean().default(false).description('是否通过 ChatLuna image renderer 将思考渲染为图片，失败时回退文本'),
-  }).description('思考查看配置'),
+    command: Schema.string().default('think').description('\u67e5\u770b\u601d\u8003\u5185\u5bb9\u7684\u6307\u4ee4\u540d'),
+    keywords: Schema.array(Schema.string()).default(['\u67e5\u770b\u601d\u8003', '\u4e0a\u6b21\u601d\u8003']).description('\u53ef\u65e0\u524d\u7f00\u89e6\u53d1\u7684\u5173\u952e\u8bcd'),
+    allowPrivate: Schema.boolean().default(false).description('\u662f\u5426\u5141\u8bb8\u5728\u79c1\u804a\u4e2d\u4f7f\u7528'),
+    emptyMessage: Schema.string().default('\u6682\u65f6\u6ca1\u6709\u53ef\u7528\u7684\u601d\u8003\u8bb0\u5f55\u3002').description('\u6ca1\u6709\u8bb0\u5f55\u65f6\u7684\u63d0\u793a\u6587\u672c'),
+    renderImage: Schema.boolean().default(false).description('\u662f\u5426\u901a\u8fc7\u0020\u0043\u0068\u0061\u0074\u004c\u0075\u006e\u0061\u0020\u0069\u006d\u0061\u0067\u0065\u0020\u0072\u0065\u006e\u0064\u0065\u0072\u0065\u0072\u0020\u5c06\u601d\u8003\u6e32\u67d3\u4e3a\u56fe\u7247\uff0c\u5931\u8d25\u65f6\u56de\u9000\u6587\u672c'),
+  }).description('\u601d\u8003\u67e5\u770b\u914d\u7f6e'),
   Schema.object({
-    guardEnabled: Schema.boolean().default(true).description('异常输出自动拦截开关'),
-    guardMode: Schema.union(['recall', 'block']).default('recall').description('recall=先发送后撤回，block=直接阻止发送'),
-    guardDelay: Schema.number().default(1).min(0).max(60).description('撤回延迟（秒）'),
-    guardAllowPrivate: Schema.boolean().default(true).description('是否在私聊中也启用拦截'),
-    guardGroups: Schema.array(Schema.string()).default([]).description('只在这些群生效，留空表示全部'),
+    guardEnabled: Schema.boolean().default(true).description('\u5f02\u5e38\u8f93\u51fa\u81ea\u52a8\u62e6\u622a\u5f00\u5173'),
+    guardMode: Schema.union(['recall', 'block']).default('recall').description('\u0072\u0065\u0063\u0061\u006c\u006c\u003d\u5148\u53d1\u9001\u540e\u64a4\u56de\uff0c\u0062\u006c\u006f\u0063\u006b\u003d\u76f4\u63a5\u963b\u6b62\u53d1\u9001'),
+    guardDelay: Schema.number().default(1).min(0).max(60).description('\u64a4\u56de\u5ef6\u8fdf\uff08\u79d2\uff09'),
+    guardAllowPrivate: Schema.boolean().default(true).description('\u662f\u5426\u5728\u79c1\u804a\u4e2d\u4e5f\u542f\u7528\u62e6\u622a'),
+    guardGroups: Schema.array(Schema.string()).default([]).description('\u53ea\u5728\u8fd9\u4e9b\u7fa4\u751f\u6548\uff0c\u7559\u7a7a\u8868\u793a\u5168\u90e8'),
     guardForbiddenPatterns: Schema.array(Schema.string())
       .default(defaultForbidden)
-      .description('命中即视为异常的模式，用于避免思考泄露或 JSON 生出'),
+      .description('\u547d\u4e2d\u5373\u89c6\u4e3a\u5f02\u5e38\u7684\u6a21\u5f0f\uff0c\u7528\u4e8e\u907f\u514d\u601d\u8003\u6cc4\u9732\u6216\u0020\u004a\u0053\u004f\u004e\u0020\u751f\u51fa'),
     guardAllowedPatterns: Schema.array(Schema.string())
       .default(['[\\s\\S]+'])
-      .description('可选白名单，至少匹配一个才算正常'),
-    guardLog: Schema.boolean().default(true).description('是否在日志记录异常原因和内容'),
-    guardContentPreview: Schema.number().default(80).min(10).max(500).description('日志内容预览长度'),
-  }).description('异常输出自动处理'),
+      .description('\u53ef\u9009\u767d\u540d\u5355\uff0c\u81f3\u5c11\u5339\u914d\u4e00\u4e2a\u624d\u7b97\u6b63\u5e38'),
+    guardLog: Schema.boolean().default(true).description('\u662f\u5426\u5728\u65e5\u5fd7\u8bb0\u5f55\u5f02\u5e38\u539f\u56e0\u548c\u5185\u5bb9'),
+    guardContentPreview: Schema.number().default(80).min(10).max(500).description('\u65e5\u5fd7\u5185\u5bb9\u9884\u89c8\u957f\u5ea6'),
+  }).description('\u5f02\u5e38\u8f93\u51fa\u81ea\u52a8\u5904\u7406'),
 ]);
 
 function extractText(content) {
@@ -60,7 +60,7 @@ function extractText(content) {
 }
 
 function extractThink(text) {
-  // 某些模型/中间件会在同一条消息里多次出现 <think>，取最后一次
+  // \u67d0\u4e9b\u6a21\u578b/\u4e2d\u95f4\u4ef6\u4f1a\u5728\u540c\u4e00\u6761\u6d88\u606f\u91cc\u591a\u6b21\u51fa\u73b0 <think>\uff0c\u53d6\u6700\u540e\u4e00\u6b21
   let last = '';
   const regex = /<think>([\s\S]*?)<\/think>/gi;
   let m;
@@ -72,7 +72,7 @@ function extractThink(text) {
 
 function formatThink(text) {
   if (!text) return text;
-  // 尝试格式化 JSON，失败则做基础去空行/缩进美化
+  // \u5c1d\u8bd5\u683c\u5f0f\u5316 JSON\uff0c\u5931\u8d25\u5219\u505a\u57fa\u7840\u53bb\u7a7a\u884c/\u7f29\u8fdb\u7f8e\u5316
   try {
     const parsed = JSON.parse(text);
     return JSON.stringify(parsed, null, 2);
@@ -159,10 +159,10 @@ function compileRegex(list) {
 function detectAbnormal(text, forbidden, allowed) {
   if (!text) return null;
   for (const re of forbidden) {
-    if (re.test(text)) return `命中禁止模式: /${re.source}/`;
+    if (re.test(text)) return `\u547d\u4e2d\u7981\u6b62\u6a21\u5f0f: /${re.source}/`;
   }
   if (allowed.length && !allowed.some((re) => re.test(text))) {
-    return '未匹配任何允许模式';
+    return '\u672a\u5339\u914d\u4efb\u4f55\u5141\u8bb8\u6a21\u5f0f';
   }
   return null;
 }
@@ -229,10 +229,10 @@ function applyGuard(ctx, config) {
 }
 
 function apply(ctx, config) {
-  // 思考查看指令
+  // \u601d\u8003\u67e5\u770b\u6307\u4ee4
   const cmd = ctx
-    .command(`${config.command} [index:string]`, '读取上一条含 <think> 的内容，可指定倒数第 N 条')
-    .usage('不带参数默认最新；示例：think 2 查询倒数第 2 条 AI 回复的思考');
+    .command(`${config.command} [index:string]`, '\u8bfb\u53d6\u4e0a\u4e00\u6761\u542b <think> \u7684\u5185\u5bb9\uff0c\u53ef\u6307\u5b9a\u5012\u6570\u7b2c N \u6761')
+    .usage('\u4e0d\u5e26\u53c2\u6570\u9ed8\u8ba4\u6700\u65b0\uff1b\u793a\u4f8b\uff1athink 2 \u67e5\u8be2\u5012\u6570\u7b2c 2 \u6761 AI \u56de\u590d\u7684\u601d\u8003');
 
   for (const keyword of config.keywords || []) {
     cmd.shortcut(keyword, { prefix: false });
@@ -240,23 +240,23 @@ function apply(ctx, config) {
 
   cmd.action(async ({ session, args }, rawIndex) => {
     if (!config.allowPrivate && !session.guildId) {
-      return '不支持在私聊中查询。';
+      return '\u4e0d\u652f\u6301\u5728\u79c1\u804a\u4e2d\u67e5\u8be2\u3002';
     }
 
     const service = ctx.chatluna_character;
-    if (!service) return 'chatluna-character 未加载。';
+    if (!service) return 'chatluna-character \u672a\u52a0\u8f7d\u3002';
 
     const temp = await service.getTemp(session);
     const targetIndex = parseIndex(rawIndex ?? args?.[0]);
 
-    // 1) 优先读取最新一次原始响应（通常仍含 <think>），仅对第 1 条有效
+    // 1) \u4f18\u5148\u8bfb\u53d6\u6700\u65b0\u4e00\u6b21\u539f\u59cb\u54cd\u5e94\uff08\u901a\u5e38\u4ecd\u542b <think>\uff09\uff0c\u4ec5\u5bf9\u7b2c 1 \u6761\u6709\u6548
     const thinkFromRaw = targetIndex === 1 ? getLatestRawThink(temp) : '';
 
-    // 2) 历史 completionMessages 中真正带 <think> 的 AI 消息
+    // 2) \u5386\u53f2 completionMessages \u4e2d\u771f\u6b63\u5e26 <think> \u7684 AI \u6d88\u606f
     const messages = temp?.completionMessages || [];
     const thinkFromHistory = thinkFromRaw ? '' : getNthThink(messages, targetIndex);
 
-    // 3) 回退：第 N 条 AI 消息再尝试抽取 <think>
+    // 3) \u56de\u9000\uff1a\u7b2c N \u6761 AI \u6d88\u606f\u518d\u5c1d\u8bd5\u62bd\u53d6 <think>
     const fallbackMsg = thinkFromRaw || thinkFromHistory ? null : getNthAiMessage(messages, targetIndex);
     const think = thinkFromRaw || thinkFromHistory || extractThink(extractText(fallbackMsg?.content));
     const formatted = formatThink(think);
@@ -264,7 +264,7 @@ function apply(ctx, config) {
 
     if (config.renderImage && ctx.chatluna?.renderer) {
       try {
-        const title = `### 上一条思考（倒数第 ${targetIndex} 条）`;
+        const title = `### \u4e0a\u4e00\u6761\u601d\u8003\uff08\u5012\u6570\u7b2c ${targetIndex} \u6761\uff09`;
         const markdown = `<div align="center">\n${title}\n</div>\n\n<div align="left">\n${formatted}\n</div>`;
         const rendered = await ctx.chatluna.renderer.render(
           {
@@ -278,10 +278,10 @@ function apply(ctx, config) {
       }
     }
 
-    return `上一条思考（倒数第 ${targetIndex} 条）\n${formatted}`;
+    return `\u4e0a\u4e00\u6761\u601d\u8003\uff08\u5012\u6570\u7b2c ${targetIndex} \u6761\uff09\n${formatted}`;
   });
 
-  // 异常输出自动处理
+  // \u5f02\u5e38\u8f93\u51fa\u81ea\u52a8\u5904\u7406
   applyGuard(ctx, config);
 }
 
