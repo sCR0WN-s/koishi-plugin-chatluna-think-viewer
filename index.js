@@ -10,11 +10,23 @@ const inject = {
 
 const defaultForbidden = [
   '<think>[\\s\\S]*?<\\/think>',
+  '<status>[\\s\\S]*?<\\/status>',
+  '<output>[\\s\\S]*?<\\/output>',
+  '<analysis>[\\s\\S]*?<\\/analysis>',
+  '<system>[\\s\\S]*?<\\/system>',
   '```\\s*think[\\s\\S]*?```',
+  '```\\s*(json|yaml|yml)[\\s\\S]*?```',
   '"role"\\s*:\\s*"assistant"',
   '"analysis"\\s*:',
   '"thought"\\s*:',
+  '(?:human_relations|人际关系)\\s*[:=]',
+  '(?:memory|记忆|记忆点|总结)\\s*[:=]',
 ];
+
+// 严格 <output><message>... 结构：允许文本 / <at>user_id</at> 文本 / <sticker>url</sticker>
+// 1~5 条 message，@ 仅允许数字 user_id
+const strictOutputPattern =
+  '^\\s*<output>\\s*(<message>(?:<at>\\d+<\\/at>\\s*)?(?:<sticker>[^<]*<\\/sticker>|[^<]*)<\\/message>\\s*){1,5}<\\/output>\\s*$';
 
 const Config = Schema.intersect([
   Schema.object({
@@ -36,6 +48,12 @@ const Config = Schema.intersect([
     guardAllowedPatterns: Schema.array(Schema.string())
       .default(['[\\s\\S]+'])
       .description('\u53ef\u9009\u767d\u540d\u5355\uff0c\u81f3\u5c11\u5339\u914d\u4e00\u4e2a\u624d\u7b97\u6b63\u5e38'),
+    guardStrictOutputOnly: Schema.boolean()
+      .default(false)
+      .description('\u53ea\u5141\u8bb8\u7b26\u5408 <output><message>\u2026</message></output> \u7ed3\u6784\u7684\u6d88\u606f\uff0c\u4e0d\u7b26\u5408\u5373\u62e6\u622a/\u64a4\u56de'),
+    guardStrictPattern: Schema.string()
+      .default(strictOutputPattern)
+      .description('\u81ea\u5b9a\u4e49\u4e25\u683c\u8f93\u51fa\u6b63\u5219\uff1b\u4e3a\u7a7a\u65f6\u4f7f\u7528\u5185\u7f6e\u7684 <output><message>\u2026</message> \u89c4\u5219'),
     guardLog: Schema.boolean().default(true).description('\u662f\u5426\u5728\u65e5\u5fd7\u8bb0\u5f55\u5f02\u5e38\u539f\u56e0\u548c\u5185\u5bb9'),
     guardContentPreview: Schema.number().default(80).min(10).max(500).description('\u65e5\u5fd7\u5185\u5bb9\u9884\u89c8\u957f\u5ea6'),
   }).description('\u5f02\u5e38\u8f93\u51fa\u81ea\u52a8\u5904\u7406'),
@@ -187,7 +205,9 @@ function applyGuard(ctx, config) {
   if (!config.guardEnabled) return;
   const logger = ctx.logger(`${name}:guard`);
   const forbidden = compileRegex(config.guardForbiddenPatterns);
-  const allowed = compileRegex(config.guardAllowedPatterns);
+  const allowed = config.guardStrictOutputOnly
+    ? compileRegex([config.guardStrictPattern || strictOutputPattern])
+    : compileRegex(config.guardAllowedPatterns);
   const original = Bot.prototype.sendMessage;
 
   Bot.prototype.sendMessage = async function patched(channelId, content, referrer, options = {}) {

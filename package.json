@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-chatluna-think-viewer",
-  "version": "1.0.20",
+  "version": "1.1.0",
   "main": "index.js",
   "description": "View chatluna <think> blocks and auto recall abnormal formatted replies.",
   "license": "MIT",
@@ -27,8 +27,8 @@
   },
   "koishi": {
     "description": {
-      "zh": "?? chatluna-character ? <think> ??????????????????/???",
-      "en": "View <think> blocks from chatluna-character and auto recall malformed replies."
+      "zh": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容，并在消息格式异常时自动拦截/撤回。",
+      "en": "View <think> blocks from chatluna-character and auto recall/guard malformed replies."
     },
     "service": {
       "required": [
@@ -41,4 +41,3 @@
     "README.md"
   ]
 }
-
