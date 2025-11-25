@@ -1,14 +1,17 @@
-﻿{
+{
   "name": "koishi-plugin-chatluna-think-viewer",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "main": "index.js",
-  "description": "Expose a command/shortcut to read the latest <think> block from chatluna-character.",
+  "description": "View chatluna <think> blocks and auto recall abnormal formatted replies.",
   "license": "MIT",
   "keywords": [
     "koishi",
     "chatluna",
     "character",
-    "think"
+    "think",
+    "recall",
+    "guard",
+    "moderation"
   ],
   "homepage": "https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer",
   "repository": {
@@ -24,8 +27,8 @@
   },
   "koishi": {
     "description": {
-      "zh": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容。",
-      "en": "Expose a command/shortcut to read the last <think> block from chatluna-character."
+      "zh": "?? chatluna-character ? <think> ??????????????????/???",
+      "en": "View <think> blocks from chatluna-character and auto recall malformed replies."
     },
     "service": {
       "required": [

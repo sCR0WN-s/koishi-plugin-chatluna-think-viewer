@@ -1,4 +1,5 @@
-﻿const { Schema } = require('koishi');
+const { Schema, h } = require('koishi');
+const { Bot } = require('@satorijs/core');
 
 const name = 'chatluna-think-viewer';
 
@@ -7,37 +8,59 @@ const inject = {
   chatluna: { required: false },
 };
 
-const Config = Schema.object({
-  command: Schema.string().default('think').description('命令名。'),
-  keywords: Schema.array(Schema.string()).default(['查看思考', '上次思考']).description('可无前缀触发的关键词。'),
-  allowPrivate: Schema.boolean().default(false).description('是否允许在私聊中使用。'),
-  emptyMessage: Schema.string().default('暂时没有可用的思考记录。').description('没有记录时的提示文本。'),
-  renderImage: Schema.boolean().default(false).description('是否用 ChatLuna 的 image renderer 将思考渲染为图片，失败时回退文本。'),
-});
+const defaultForbidden = [
+  '<think>[\\s\\S]*?<\\/think>',
+  '```\\s*think[\\s\\S]*?```',
+  '"role"\\s*:\\s*"assistant"',
+  '"analysis"\\s*:',
+  '"thought"\\s*:',
+];
+
+const Config = Schema.intersect([
+  Schema.object({
+    command: Schema.string().default('think').description('�鿴˼�����ݵ�ָ����'),
+    keywords: Schema.array(Schema.string()).default(['�鿴˼��', '�ϴ�˼��']).description('����ǰ��ָ��Ĺؼ���'),
+    allowPrivate: Schema.boolean().default(false).description('�Ƿ�������˽��ʹ��'),
+    emptyMessage: Schema.string().default('��ʱû�п��õ�˼����¼��').description('û�м�¼ʱ����ʾ�ı�'),
+    renderImage: Schema.boolean().default(false).description('�Ƿ�ͨ�� ChatLuna �� image renderer ��˼����ȾΪͼƬ��ʧ��ʱ�����ı�'),
+  }).description('˼���鿴����'),
+  Schema.object({
+    guardEnabled: Schema.boolean().default(true).description('����쳣��ʽ���Զ�����/����'),
+    guardMode: Schema.union(['recall', 'block']).default('recall').description('recall=�ȷ��󳷻أ�block=ֱ����ֹ����'),
+    guardDelay: Schema.number().default(1).min(0).max(60).description('�����ӳ٣��룩'),
+    guardAllowPrivate: Schema.boolean().default(true).description('�Ƿ���˽���������쳣���'),
+    guardGroups: Schema.array(Schema.string()).default([]).description('ֻ����ЩȺ���ã���ձ�ʾȫ��'),
+    guardForbiddenPatterns: Schema.array(Schema.string())
+      .default(defaultForbidden)
+      .description('��������������Ϊ�쳣������˼����й©������ JSON ��'),
+    guardAllowedPatterns: Schema.array(Schema.string())
+      .default(['[\\s\\S]+'])
+      .description('��ѡ�İ�����������������һ������Ϊ����'),
+    guardLog: Schema.boolean().default(true).description('�Ƿ�����־�м�¼�쳣���ݺ�ԭ��'),
+    guardContentPreview: Schema.number().default(80).min(10).max(500).description('��־�ﱣ�������Ԥ���ַ���'),
+  }).description('�쳣��ʽ�Զ�����'),
+]);
 
 function extractText(content) {
-  if (typeof content === 'string') return content;
-  if (Array.isArray(content)) {
-    return content
-      .map((part) => {
-        if (typeof part === 'string') return part;
-        if (part && typeof part === 'object') {
-          return part.text || part.content || part.value || '';
-        }
-        return '';
-      })
-      .join('');
+  if (content == null) return '';
+  const normalized = h.normalize(content);
+  const parts = [];
+  for (const el of normalized) {
+    if (typeof el === 'string') {
+      parts.push(el);
+      continue;
+    }
+    if (Array.isArray(el.children) && el.children.length) {
+      parts.push(extractText(el.children));
+    }
+    const textLike = el.attrs?.content ?? el.attrs?.text ?? el.children?.join?.('') ?? '';
+    if (textLike) parts.push(textLike);
   }
-  if (content && typeof content === 'object') {
-    if (typeof content.text === 'string') return content.text;
-    if (typeof content.content === 'string') return content.content;
-    if (typeof content.value === 'string') return content.value;
-  }
-  return '';
+  return parts.join('');
 }
 
 function extractThink(text) {
-  // 某些模型/中间件会在同一条消息里多次出现 <think>，取最后一次出现的片段
+  // ĳЩģ��/�м������ͬһ����Ϣ���γ��� <think>��ȡ���һ�γ��ֵ�Ƭ��
   let last = '';
   const regex = /<think>([\s\S]*?)<\/think>/gi;
   let m;
@@ -49,12 +72,11 @@ function extractThink(text) {
 
 function formatThink(text) {
   if (!text) return text;
-  // 尝试格式化 JSON，失败则做基础去空行/缩进美化
+  // ���Ը�ʽ�� JSON��ʧ�����ȥ��β/�ϲ�����
   try {
     const parsed = JSON.parse(text);
     return JSON.stringify(parsed, null, 2);
   } catch {
-    // 保留原文，去掉多余空行并统一缩进
     const lines = text.split('\n').map((l) => l.trimEnd());
     const filtered = lines.filter((l, idx, arr) => !(l === '' && arr[idx - 1] === ''));
     const nonEmpty = filtered.filter((l) => l.trim().length > 0);
@@ -122,10 +144,93 @@ function getLatestRawThink(temp) {
   return '';
 }
 
+function compileRegex(list) {
+  return (list || []).map((p) => {
+    try {
+      return new RegExp(p, 'i');
+    } catch (err) {
+      return null;
+    }
+  }).filter(Boolean);
+}
+
+function detectAbnormal(text, forbidden, allowed) {
+  if (!text) return null;
+  for (const re of forbidden) {
+    if (re.test(text)) return `���н�ֹ����: /${re.source}/`;
+  }
+  if (allowed.length && !allowed.some((re) => re.test(text))) {
+    return 'δ�����κΰ���������';
+  }
+  return null;
+}
+
+function shorten(text, limit = 80) {
+  if (!text) return '';
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit)}...(${text.length} chars)`;
+}
+
+function shouldGuard(config, options) {
+  const session = options?.session;
+  if (!session) return false;
+  const guildId = session.guildId || session.event?.guild?.id;
+  const isGroup = !!guildId;
+  if (!config.guardAllowPrivate && !isGroup) return false;
+  if (config.guardGroups?.length && isGroup && !config.guardGroups.includes(guildId)) return false;
+  return true;
+}
+
+function applyGuard(ctx, config) {
+  if (!config.guardEnabled) return;
+  const logger = ctx.logger(`${name}:guard`);
+  const forbidden = compileRegex(config.guardForbiddenPatterns);
+  const allowed = compileRegex(config.guardAllowedPatterns);
+  const original = Bot.prototype.sendMessage;
+
+  Bot.prototype.sendMessage = async function patched(channelId, content, referrer, options = {}) {
+    if (!shouldGuard(config, options)) {
+      return original.call(this, channelId, content, referrer, options);
+    }
+
+    const text = extractText(content);
+    const reason = detectAbnormal(text, forbidden, allowed);
+
+    if (!reason) {
+      return original.call(this, channelId, content, referrer, options);
+    }
+
+    const preview = shorten(text, config.guardContentPreview);
+    if (config.guardMode === 'block') {
+      if (config.guardLog) logger.warn(`[block] ${reason} | content: ${preview}`);
+      return [];
+    }
+
+    const ids = await original.call(this, channelId, content, referrer, options);
+    if (config.guardLog) logger.warn(`[recall] ${reason} | content: ${preview}`);
+    const delay = Math.max(0, config.guardDelay) * 1000;
+    if (Array.isArray(ids) && ids.length && typeof this.deleteMessage === 'function') {
+      setTimeout(() => {
+        for (const id of ids) {
+          this.deleteMessage(channelId, id).catch((err) => {
+            logger.warn(`[recall-failed] id=${id} reason=${err?.message || err}`);
+          });
+        }
+      }, delay);
+    }
+    return ids;
+  };
+
+  ctx.on('dispose', () => {
+    Bot.prototype.sendMessage = original;
+  });
+}
+
 function apply(ctx, config) {
+  // ˼���鿴����
   const cmd = ctx
-    .command(`${config.command} [index:string]`, '读取上一条回复里的 <think> 内容，可指定倒数第 N 条')
-    .usage('不带参数默认读取最新一条；示例：think 2 读取倒数第 2 条 AI 回复的思考');
+    .command(`${config.command} [index:string]`, '��ȡ���һ�ΰ��� <think> �����ݣ���ָ���� N ��')
+    .usage('���� think 2 �ɲ鿴������ 2 �� AI �ظ���˼������');
 
   for (const keyword of config.keywords || []) {
     cmd.shortcut(keyword, { prefix: false });
@@ -133,23 +238,23 @@ function apply(ctx, config) {
 
   cmd.action(async ({ session, args }, rawIndex) => {
     if (!config.allowPrivate && !session.guildId) {
-      return '不支持在私聊中查询。';
+      return '��֧����˽�����ѯ��';
     }
 
     const service = ctx.chatluna_character;
-    if (!service) return 'chatluna-character 未加载。';
+    if (!service) return 'chatluna-character δ���ء�';
 
     const temp = await service.getTemp(session);
     const targetIndex = parseIndex(rawIndex ?? args?.[0]);
 
-    // 1) 优先读取最新一次原始响应（通常仍含 <think>），只对第 1 条有效
+    // 1) �ȶ����һ��ԭʼ��Ӧ��ͨ��ֻ�Ե� 1 ����Ч��
     const thinkFromRaw = targetIndex === 1 ? getLatestRawThink(temp) : '';
 
-    // 2) 历史 completionMessages 中真正带 <think> 的 AI 消息
+    // 2) ����ʷ completionMessages �в��Ұ��� <think> �� AI ��Ϣ
     const messages = temp?.completionMessages || [];
     const thinkFromHistory = thinkFromRaw ? '' : getNthThink(messages, targetIndex);
 
-    // 3) 回退：第 N 条 AI 消息再尝试抽取
+    // 3) ���ף�ȡ�� N �� AI ��Ϣ�ٴ�����ȡ <think>
     const fallbackMsg = thinkFromRaw || thinkFromHistory ? null : getNthAiMessage(messages, targetIndex);
     const think = thinkFromRaw || thinkFromHistory || extractThink(extractText(fallbackMsg?.content));
     const formatted = formatThink(think);
@@ -157,11 +262,10 @@ function apply(ctx, config) {
 
     if (config.renderImage && ctx.chatluna?.renderer) {
       try {
-        const title = `### 上一条思考（倒数第 ${targetIndex} 条）`;
+        const title = `### ���˼�����ݣ������� ${targetIndex} ����`;
         const markdown = `<div align="center">\n${title}\n</div>\n\n<div align="left">\n${formatted}\n</div>`;
         const rendered = await ctx.chatluna.renderer.render(
           {
-            // 居中标题、左对齐正文，保持 renderer 兼容
             content: [{ type: 'text', text: markdown }],
           },
           { type: 'image', session },
@@ -172,8 +276,11 @@ function apply(ctx, config) {
       }
     }
 
-    return `上一条思考（倒数第 ${targetIndex} 条）\n${formatted}`;
+    return `���˼�����ݣ������� ${targetIndex} ����\n${formatted}`;
   });
+
+  // �쳣��ʽ�Զ�����
+  applyGuard(ctx, config);
 }
 
 module.exports = {
