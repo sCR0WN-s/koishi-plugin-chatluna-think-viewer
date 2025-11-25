@@ -1,4 +1,4 @@
-const { Schema } = require('koishi');
+ï»¿const { Schema } = require('koishi');
 
 const name = 'chatluna-think-viewer';
 
@@ -8,11 +8,11 @@ const inject = {
 };
 
 const Config = Schema.object({
-  command: Schema.string().default('think').description('ÃüÁîÃû³Æ'),
-  keywords: Schema.array(Schema.string()).default(['²é¿´Ë¼¿¼', 'ÉÏ´ÎË¼¿¼']).description('ÎŞĞèÇ°×º¼´¿É´¥·¢µÄ¹Ø¼ü´Ê'),
-  allowPrivate: Schema.boolean().default(false).description('ÊÇ·ñÔÊĞíÔÚË½ÁÄÖĞÊ¹ÓÃ'),
-  emptyMessage: Schema.string().default('ÔİÊ±Ã»ÓĞ¿ÉÓÃµÄË¼¿¼¼ÇÂ¼¡£').description('Ã»ÓĞ¼ÇÂ¼Ê±µÄÌáÊ¾ÎÄ°¸'),
-  renderImage: Schema.boolean().default(false).description('³¢ÊÔÊ¹ÓÃ ChatLuna µÄ image renderer ½«Ë¼¿¼ÄÚÈİäÖÈ¾ÎªÍ¼Æ¬·¢ËÍ£¬Ê§°ÜÔò»ØÍËÎÄ±¾'),
+  command: Schema.string().default('think').description('å‘½ä»¤åã€‚'),
+  keywords: Schema.array(Schema.string()).default(['æŸ¥çœ‹æ€è€ƒ', 'ä¸Šæ¬¡æ€è€ƒ']).description('å¯æ— å‰ç¼€è§¦å‘çš„å…³é”®è¯ã€‚'),
+  allowPrivate: Schema.boolean().default(false).description('æ˜¯å¦å…è®¸åœ¨ç§èŠä¸­ä½¿ç”¨ã€‚'),
+  emptyMessage: Schema.string().default('æš‚æ—¶æ²¡æœ‰å¯ç”¨çš„æ€è€ƒè®°å½•ã€‚').description('æ²¡æœ‰è®°å½•æ—¶çš„æç¤ºæ–‡æœ¬ã€‚'),
+  renderImage: Schema.boolean().default(false).description('æ˜¯å¦ç”¨ ChatLuna çš„ image renderer å°†æ€è€ƒæ¸²æŸ“ä¸ºå›¾ç‰‡ï¼Œå¤±è´¥æ—¶å›é€€æ–‡æœ¬ã€‚'),
 });
 
 function extractText(content) {
@@ -37,7 +37,7 @@ function extractText(content) {
 }
 
 function extractThink(text) {
-  // ÓĞĞ©Ä£ĞÍ/ÖĞ¼ä¼ş»áÔÚÍ¬Ò»ÌõÏûÏ¢Àï¶à´ÎÊä³ö <think>£¬È¡×îºóÒ»¶Î±ÜÃâÎóÓÃ¾ÉÆ¬¶Î
+  // æŸäº›æ¨¡å‹/ä¸­é—´ä»¶ä¼šåœ¨åŒä¸€æ¡æ¶ˆæ¯é‡Œå¤šæ¬¡å‡ºç° <think>ï¼Œå–æœ€åä¸€æ¬¡å‡ºç°çš„ç‰‡æ®µ
   let last = '';
   const regex = /<think>([\s\S]*?)<\/think>/gi;
   let m;
@@ -49,12 +49,12 @@ function extractThink(text) {
 
 function formatThink(text) {
   if (!text) return text;
-  // ³¢ÊÔ JSON ÃÀ»¯
+  // å°è¯•æ ¼å¼åŒ– JSONï¼Œå¤±è´¥åˆ™åšåŸºç¡€å»ç©ºè¡Œ/ç¼©è¿›ç¾åŒ–
   try {
     const parsed = JSON.parse(text);
     return JSON.stringify(parsed, null, 2);
   } catch {
-    // ±£ÁôÔ­ÎÄ£¬È¥µô¶àÓà¿ÕĞĞÓëÍ³Ò»×ó²àËõ½ø
+    // ä¿ç•™åŸæ–‡ï¼Œå»æ‰å¤šä½™ç©ºè¡Œå¹¶ç»Ÿä¸€ç¼©è¿›
     const lines = text.split('\n').map((l) => l.trimEnd());
     const filtered = lines.filter((l, idx, arr) => !(l === '' && arr[idx - 1] === ''));
     const nonEmpty = filtered.filter((l) => l.trim().length > 0);
@@ -124,8 +124,8 @@ function getLatestRawThink(temp) {
 
 function apply(ctx, config) {
   const cmd = ctx
-    .command(`${config.command} [index:string]`, '»ñÈ¡ÉÏÒ»Ìõ»Ø¸´ÖĞµÄ <think> ÄÚÈİ£¨¿ÉÖ¸¶¨µ¹ÊıµÚ N Ìõ£©')
-    .usage('²»´ø²ÎÊıÄ¬ÈÏ¶ÁÈ¡×î½üÒ»Ìõ£»ÀıÈç think 2 ¶ÁÈ¡µ¹ÊıµÚ¶şÌõ AI »Ø¸´µÄË¼¿¼');
+    .command(`${config.command} [index:string]`, 'è¯»å–ä¸Šä¸€æ¡å›å¤é‡Œçš„ <think> å†…å®¹ï¼Œå¯æŒ‡å®šå€’æ•°ç¬¬ N æ¡')
+    .usage('ä¸å¸¦å‚æ•°é»˜è®¤è¯»å–æœ€æ–°ä¸€æ¡ï¼›ç¤ºä¾‹ï¼šthink 2 è¯»å–å€’æ•°ç¬¬ 2 æ¡ AI å›å¤çš„æ€è€ƒ');
 
   for (const keyword of config.keywords || []) {
     cmd.shortcut(keyword, { prefix: false });
@@ -133,23 +133,23 @@ function apply(ctx, config) {
 
   cmd.action(async ({ session, args }, rawIndex) => {
     if (!config.allowPrivate && !session.guildId) {
-      return '½öÖ§³ÖÔÚÈºÁÄÖĞ²éÑ¯¡£';
+      return 'ä¸æ”¯æŒåœ¨ç§èŠä¸­æŸ¥è¯¢ã€‚';
     }
 
     const service = ctx.chatluna_character;
-    if (!service) return 'chatluna-character Î´ÆôÓÃ¡£';
+    if (!service) return 'chatluna-character æœªåŠ è½½ã€‚';
 
     const temp = await service.getTemp(session);
     const targetIndex = parseIndex(rawIndex ?? args?.[0]);
 
-    // 1) ÓÅÏÈ¶ÁÈ¡×îĞÂÒ»´ÎÔ­Ê¼ÏìÓ¦£¨Í¨³£ÈÔº¬ <think>£©£¬Ö»¶ÔµÚ 1 ÌõÓĞĞ§
+    // 1) ä¼˜å…ˆè¯»å–æœ€æ–°ä¸€æ¬¡åŸå§‹å“åº”ï¼ˆé€šå¸¸ä»å« <think>ï¼‰ï¼Œåªå¯¹ç¬¬ 1 æ¡æœ‰æ•ˆ
     const thinkFromRaw = targetIndex === 1 ? getLatestRawThink(temp) : '';
 
-    // 2) ÀúÊ· completionMessages ÖĞÕæÕı´ø <think> µÄ AI ÏûÏ¢
+    // 2) å†å² completionMessages ä¸­çœŸæ­£å¸¦ <think> çš„ AI æ¶ˆæ¯
     const messages = temp?.completionMessages || [];
     const thinkFromHistory = thinkFromRaw ? '' : getNthThink(messages, targetIndex);
 
-    // 3) »ØÍËµ½µÚ N Ìõ AI ÏûÏ¢ÔÙ³¢ÊÔ³éÈ¡
+    // 3) å›é€€ï¼šç¬¬ N æ¡ AI æ¶ˆæ¯å†å°è¯•æŠ½å–
     const fallbackMsg = thinkFromRaw || thinkFromHistory ? null : getNthAiMessage(messages, targetIndex);
     const think = thinkFromRaw || thinkFromHistory || extractThink(extractText(fallbackMsg?.content));
     const formatted = formatThink(think);
@@ -157,11 +157,11 @@ function apply(ctx, config) {
 
     if (config.renderImage && ctx.chatluna?.renderer) {
       try {
-        const title = `### ÉÏÒ»ÌõË¼¿¼£¨µ¹ÊıµÚ ${targetIndex} Ìõ£©`;
+        const title = `### ä¸Šä¸€æ¡æ€è€ƒï¼ˆå€’æ•°ç¬¬ ${targetIndex} æ¡ï¼‰`;
         const markdown = `<div align="center">\n${title}\n</div>\n\n<div align="left">\n${formatted}\n</div>`;
         const rendered = await ctx.chatluna.renderer.render(
           {
-            // ÖĞ¼ä±êÌâ¾ÓÖĞ¡¢ÕıÎÄ×ó¶ÔÆë£¬±ÜÃâÕû¶ÎÌù×ó²à
+            // å±…ä¸­æ ‡é¢˜ã€å·¦å¯¹é½æ­£æ–‡ï¼Œä¿æŒ renderer å…¼å®¹
             content: [{ type: 'text', text: markdown }],
           },
           { type: 'image', session },
@@ -172,7 +172,7 @@ function apply(ctx, config) {
       }
     }
 
-    return `ÉÏÒ»ÌõË¼¿¼£º\n${formatted}`;
+    return `ä¸Šä¸€æ¡æ€è€ƒï¼ˆå€’æ•°ç¬¬ ${targetIndex} æ¡ï¼‰\n${formatted}`;
   });
 }
 
