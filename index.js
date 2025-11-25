@@ -93,6 +93,21 @@ function getNthAiMessage(messages, n = 1) {
   return null;
 }
 
+function getNthThink(messages, n = 1) {
+  if (!Array.isArray(messages) || n < 1) return null;
+  let count = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const type = typeof msg?._getType === 'function' ? msg._getType() : msg?.type || msg?.role;
+    if (type !== 'ai' && type !== 'assistant') continue;
+    const think = extractThink(extractText(msg.content));
+    if (!think) continue;
+    count += 1;
+    if (count === n) return think;
+  }
+  return null;
+}
+
 function apply(ctx, config) {
   const cmd = ctx
     .command(`${config.command} [index:string]`, '获取上一条回复中的 <think> 内容（可指定倒数第 N 条）')
@@ -116,10 +131,10 @@ function apply(ctx, config) {
 
     const targetIndex = parseIndex(rawIndex ?? args?.[0]);
 
-    const targetMessage = getNthAiMessage(messages, targetIndex);
-    if (!targetMessage) return config.emptyMessage;
-
-    const think = formatThink(extractThink(extractText(targetMessage.content)));
+    const rawThink = getNthThink(messages, targetIndex);
+    const think = rawThink
+      ? formatThink(rawThink)
+      : formatThink(extractThink(extractText(getNthAiMessage(messages, targetIndex)?.content)));
     if (!think) return config.emptyMessage;
 
     if (config.renderImage && ctx.chatluna?.renderer) {
