@@ -18,27 +18,27 @@ const defaultForbidden = [
 
 const Config = Schema.intersect([
   Schema.object({
-    command: Schema.string().default('think').description('�鿴˼�����ݵ�ָ����'),
-    keywords: Schema.array(Schema.string()).default(['�鿴˼��', '�ϴ�˼��']).description('����ǰ��ָ��Ĺؼ���'),
-    allowPrivate: Schema.boolean().default(false).description('�Ƿ�������˽��ʹ��'),
-    emptyMessage: Schema.string().default('��ʱû�п��õ�˼����¼��').description('û�м�¼ʱ����ʾ�ı�'),
-    renderImage: Schema.boolean().default(false).description('�Ƿ�ͨ�� ChatLuna �� image renderer ��˼����ȾΪͼƬ��ʧ��ʱ�����ı�'),
-  }).description('˼���鿴����'),
+    command: Schema.string().default('think').description('查看思考内容的指令名'),
+    keywords: Schema.array(Schema.string()).default(['查看思考', '上次思考']).description('可无前缀触发的关键词'),
+    allowPrivate: Schema.boolean().default(false).description('是否允许在私聊中使用'),
+    emptyMessage: Schema.string().default('暂时没有可用的思考记录。').description('没有记录时的提示文本'),
+    renderImage: Schema.boolean().default(false).description('是否通过 ChatLuna image renderer 将思考渲染为图片，失败时回退文本'),
+  }).description('思考查看配置'),
   Schema.object({
-    guardEnabled: Schema.boolean().default(true).description('����쳣��ʽ���Զ�����/����'),
-    guardMode: Schema.union(['recall', 'block']).default('recall').description('recall=�ȷ��󳷻أ�block=ֱ����ֹ����'),
-    guardDelay: Schema.number().default(1).min(0).max(60).description('�����ӳ٣��룩'),
-    guardAllowPrivate: Schema.boolean().default(true).description('�Ƿ���˽���������쳣���'),
-    guardGroups: Schema.array(Schema.string()).default([]).description('ֻ����ЩȺ���ã���ձ�ʾȫ��'),
+    guardEnabled: Schema.boolean().default(true).description('异常输出自动拦截开关'),
+    guardMode: Schema.union(['recall', 'block']).default('recall').description('recall=先发送后撤回，block=直接阻止发送'),
+    guardDelay: Schema.number().default(1).min(0).max(60).description('撤回延迟（秒）'),
+    guardAllowPrivate: Schema.boolean().default(true).description('是否在私聊中也启用拦截'),
+    guardGroups: Schema.array(Schema.string()).default([]).description('只在这些群生效，留空表示全部'),
     guardForbiddenPatterns: Schema.array(Schema.string())
       .default(defaultForbidden)
-      .description('��������������Ϊ�쳣������˼����й©������ JSON ��'),
+      .description('命中即视为异常的模式，用于避免思考泄露或 JSON 生出'),
     guardAllowedPatterns: Schema.array(Schema.string())
       .default(['[\\s\\S]+'])
-      .description('��ѡ�İ�����������������һ������Ϊ����'),
-    guardLog: Schema.boolean().default(true).description('�Ƿ�����־�м�¼�쳣���ݺ�ԭ��'),
-    guardContentPreview: Schema.number().default(80).min(10).max(500).description('��־�ﱣ�������Ԥ���ַ���'),
-  }).description('�쳣��ʽ�Զ�����'),
+      .description('可选白名单，至少匹配一个才算正常'),
+    guardLog: Schema.boolean().default(true).description('是否在日志记录异常原因和内容'),
+    guardContentPreview: Schema.number().default(80).min(10).max(500).description('日志内容预览长度'),
+  }).description('异常输出自动处理'),
 ]);
 
 function extractText(content) {
@@ -60,7 +60,7 @@ function extractText(content) {
 }
 
 function extractThink(text) {
-  // ĳЩģ��/�м������ͬһ����Ϣ���γ��� <think>��ȡ���һ�γ��ֵ�Ƭ��
+  // 某些模型/中间件会在同一条消息里多次出现 <think>，取最后一次
   let last = '';
   const regex = /<think>([\s\S]*?)<\/think>/gi;
   let m;
@@ -72,7 +72,7 @@ function extractThink(text) {
 
 function formatThink(text) {
   if (!text) return text;
-  // ���Ը�ʽ�� JSON��ʧ�����ȥ��β/�ϲ�����
+  // 尝试格式化 JSON，失败则做基础去空行/缩进美化
   try {
     const parsed = JSON.parse(text);
     return JSON.stringify(parsed, null, 2);
@@ -145,22 +145,24 @@ function getLatestRawThink(temp) {
 }
 
 function compileRegex(list) {
-  return (list || []).map((p) => {
-    try {
-      return new RegExp(p, 'i');
-    } catch (err) {
-      return null;
-    }
-  }).filter(Boolean);
+  return (list || [])
+    .map((p) => {
+      try {
+        return new RegExp(p, 'i');
+      } catch (err) {
+        return null;
+      }
+    })
+    .filter(Boolean);
 }
 
 function detectAbnormal(text, forbidden, allowed) {
   if (!text) return null;
   for (const re of forbidden) {
-    if (re.test(text)) return `���н�ֹ����: /${re.source}/`;
+    if (re.test(text)) return `命中禁止模式: /${re.source}/`;
   }
   if (allowed.length && !allowed.some((re) => re.test(text))) {
-    return 'δ�����κΰ���������';
+    return '未匹配任何允许模式';
   }
   return null;
 }
@@ -227,10 +229,10 @@ function applyGuard(ctx, config) {
 }
 
 function apply(ctx, config) {
-  // ˼���鿴����
+  // 思考查看指令
   const cmd = ctx
-    .command(`${config.command} [index:string]`, '��ȡ���һ�ΰ��� <think> �����ݣ���ָ���� N ��')
-    .usage('���� think 2 �ɲ鿴������ 2 �� AI �ظ���˼������');
+    .command(`${config.command} [index:string]`, '读取上一条含 <think> 的内容，可指定倒数第 N 条')
+    .usage('不带参数默认最新；示例：think 2 查询倒数第 2 条 AI 回复的思考');
 
   for (const keyword of config.keywords || []) {
     cmd.shortcut(keyword, { prefix: false });
@@ -238,23 +240,23 @@ function apply(ctx, config) {
 
   cmd.action(async ({ session, args }, rawIndex) => {
     if (!config.allowPrivate && !session.guildId) {
-      return '��֧����˽�����ѯ��';
+      return '不支持在私聊中查询。';
     }
 
     const service = ctx.chatluna_character;
-    if (!service) return 'chatluna-character δ���ء�';
+    if (!service) return 'chatluna-character 未加载。';
 
     const temp = await service.getTemp(session);
     const targetIndex = parseIndex(rawIndex ?? args?.[0]);
 
-    // 1) �ȶ����һ��ԭʼ��Ӧ��ͨ��ֻ�Ե� 1 ����Ч��
+    // 1) 优先读取最新一次原始响应（通常仍含 <think>），仅对第 1 条有效
     const thinkFromRaw = targetIndex === 1 ? getLatestRawThink(temp) : '';
 
-    // 2) ����ʷ completionMessages �в��Ұ��� <think> �� AI ��Ϣ
+    // 2) 历史 completionMessages 中真正带 <think> 的 AI 消息
     const messages = temp?.completionMessages || [];
     const thinkFromHistory = thinkFromRaw ? '' : getNthThink(messages, targetIndex);
 
-    // 3) ���ף�ȡ�� N �� AI ��Ϣ�ٴ�����ȡ <think>
+    // 3) 回退：第 N 条 AI 消息再尝试抽取 <think>
     const fallbackMsg = thinkFromRaw || thinkFromHistory ? null : getNthAiMessage(messages, targetIndex);
     const think = thinkFromRaw || thinkFromHistory || extractThink(extractText(fallbackMsg?.content));
     const formatted = formatThink(think);
@@ -262,7 +264,7 @@ function apply(ctx, config) {
 
     if (config.renderImage && ctx.chatluna?.renderer) {
       try {
-        const title = `### ���˼�����ݣ������� ${targetIndex} ����`;
+        const title = `### 上一条思考（倒数第 ${targetIndex} 条）`;
         const markdown = `<div align="center">\n${title}\n</div>\n\n<div align="left">\n${formatted}\n</div>`;
         const rendered = await ctx.chatluna.renderer.render(
           {
@@ -276,10 +278,10 @@ function apply(ctx, config) {
       }
     }
 
-    return `���˼�����ݣ������� ${targetIndex} ����\n${formatted}`;
+    return `上一条思考（倒数第 ${targetIndex} 条）\n${formatted}`;
   });
 
-  // �쳣��ʽ�Զ�����
+  // 异常输出自动处理
   applyGuard(ctx, config);
 }
 
