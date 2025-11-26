@@ -226,24 +226,20 @@ function applyGuard(ctx, config) {
   const original = Bot.prototype.sendMessage;
 
   Bot.prototype.sendMessage = async function patched(channelId, content, referrer, options = {}) {
+    const ids = await original.call(this, channelId, content, referrer, options);
+
     if (!shouldGuard(config, options)) {
-      return original.call(this, channelId, content, referrer, options);
+      return ids;
     }
 
     const text = extractText(content);
-    const reason = detectAbnormal(text, forbidden, allowed);
+    const reason = detectAbnormal(text, forbidden, allowed, strictMode);
 
     if (!reason) {
-      return original.call(this, channelId, content, referrer, options);
+      return ids;
     }
 
     const preview = shorten(text, config.guardContentPreview);
-    if (config.guardMode === 'block') {
-      if (config.guardLog) logger.warn(`[block] ${reason} | content: ${preview}`);
-      return [];
-    }
-
-    const ids = await original.call(this, channelId, content, referrer, options);
     if (config.guardLog) logger.warn(`[recall] ${reason} | content: ${preview}`);
     const delay = Math.max(0, config.guardDelay) * 1000;
     if (Array.isArray(ids) && ids.length && typeof this.deleteMessage === 'function') {
