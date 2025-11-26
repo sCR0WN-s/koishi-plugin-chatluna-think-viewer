@@ -1,4 +1,4 @@
-const { Schema, h } = require('koishi');
+﻿const { Schema, h } = require('koishi');
 const { Bot } = require('@satorijs/core');
 
 const name = 'chatluna-think-viewer';
@@ -19,12 +19,12 @@ const defaultForbidden = [
   '"role"\\s*:\\s*"assistant"',
   '"analysis"\\s*:',
   '"thought"\\s*:',
-  '(?:human_relations|人际关系)\\s*[:=]',
-  '(?:memory|记忆|记忆点|总结)\\s*[:=]',
+  '(?:human_relations|浜洪檯鍏崇郴)\\s*[:=]',
+  '(?:memory|璁板繂|璁板繂鐐箌鎬荤粨)\\s*[:=]',
 ];
 
-// 严格 <output><message>... 结构：允许文�?/ <at>user_id</at> 文本 / <sticker>url</sticker>
-// ������ 1~5 �� <message>��@ ֻ���ܴ����ֵ� user_id
+// 涓ユ牸 <output><message>... 缁撴瀯锛氬厑璁告枃鏈?/ <at>user_id</at> 鏂囨湰 / <sticker>url</sticker>
+// 仅允许 1~5 条 <message>，@ 只接受纯数字的 user_id
 const strictOutputPattern =
   '^\\s*<output>\\s*(<message>(?:<at>\\d+<\\/at>\\s*)?(?:<sticker>[^<]*<\\/sticker>|[^<]*)<\\/message>\\s*){1,5}<\\/output>\\s*$';
 
@@ -42,7 +42,7 @@ const Config = Schema.intersect([
     guardDelay: Schema.number().default(1).min(0).max(60).description('\u64a4\u56de\u5ef6\u8fdf\uff08\u79d2\uff09'),
     guardAllowPrivate: Schema.boolean().default(true).description('\u662f\u5426\u5728\u79c1\u804a\u4e2d\u4e5f\u542f\u7528\u62e6\u622a'),
     guardGroups: Schema.array(Schema.string()).default([]).description('\u53ea\u5728\u8fd9\u4e9b\u7fa4\u751f\u6548\uff0c\u7559\u7a7a\u8868\u793a\u5168\u90e8'),
-    guardKeywordMode: Schema.boolean().default(true).description('true \u65f6\u6309\u5173\u952e\u8bcd\u5b50\u4e32\u5339\u914d（\u4e0d\u533a\u5206\u5927\u5c0f\u5199）\uff0cfalse \u65f6\u6309\u6b63\u5219\u5339\u914d'),
+    guardKeywordMode: Schema.boolean().default(true).description('true \u65f6\u6309\u5173\u952e\u8bcd\u5b50\u4e32\u5339\u914d锛圽u4e0d\u533a\u5206\u5927\u5c0f\u5199锛塡uff0cfalse \u65f6\u6309\u6b63\u5219\u5339\u914d'),
     guardForbiddenPatterns: Schema.array(Schema.string())
       .default(defaultForbidden)
       .description('\u547d\u4e2d\u5373\u89c6\u4e3a\u5f02\u5e38\u7684\u6a21\u5f0f\uff0c\u7528\u4e8e\u907f\u514d\u601d\u8003\u6cc4\u9732\u6216\u0020\u004a\u0053\u004f\u004e\u0020\u751f\u51fa'),
@@ -61,19 +61,29 @@ const Config = Schema.intersect([
 ]);
 
 function extractText(content) {
+  // Normalize varied content types to plain text so we can regex <think>.
   if (content == null) return '';
-  const normalized = h.normalize(content);
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) return content.map(extractText).join('');
+
   const parts = [];
-  for (const el of normalized) {
-    if (typeof el === 'string') {
-      parts.push(el);
-      continue;
+  // Try koishi segment normalization first.
+  try {
+    for (const el of h.normalize([content])) {
+      if (typeof el === 'string') {
+        parts.push(el);
+        continue;
+      }
+      if (Array.isArray(el.children) && el.children.length) {
+        parts.push(extractText(el.children));
+      }
+      const textLike = el.attrs?.content ?? el.attrs?.text ?? el.children?.join?.('') ?? '';
+      if (textLike) parts.push(textLike);
     }
-    if (Array.isArray(el.children) && el.children.length) {
-      parts.push(extractText(el.children));
-    }
-    const textLike = el.attrs?.content ?? el.attrs?.text ?? el.children?.join?.('') ?? '';
-    if (textLike) parts.push(textLike);
+  } catch {
+    // Fallback for plain objects (e.g., LangChain AIMessage with {text, content})
+    const candidate = content.text ?? content.content;
+    if (candidate) parts.push(String(candidate));
   }
   return parts.join('');
 }
