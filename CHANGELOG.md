@@ -1,4 +1,7 @@
-﻿# Changelog
+# Changelog
+
+## 2.2.3
+- 重新打包为无 BOM 的 package.json，修复安装时 JSON 解析报错。
 
 ## 2.2.2
 - 去除 BOM、修正 package.json 编码导致的加载/解析错误。
