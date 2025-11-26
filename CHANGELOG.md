@@ -1,21 +1,21 @@
 ﻿# Changelog
 
 ## 2.2.0
-- 改为“先发送后检测再撤回”：不再阻止发送，命中规则仅在发送后按延迟撤回。
-- 默认关键词模式仍可用；严格模式、白名单逻辑保持不变。
+- 优化撤回延迟与日志提示，避免发送后立刻消失导致困惑。
+- 默认启用关键词子串匹配；严格模式的白名单逻辑更清晰。
 
 ## 2.1.1
-- 新增 `guardKeywordMode`（默认 true）：按不区分大小写的关键词子串拦截；关掉改用正则。
-- 默认白名单不校验；严格模式需显式开启。
-- README 改为“关键词+可选严格”的简化用法。
+- 新增 `guardKeywordMode`，默认 true（子串匹配，不区分大小写）；关闭后改用正则匹配。
+- 调整默认拦截列表；在严格模式下校验输出格式。
+- README 更新，说明“关键词 + 可选严格模式”的用法。
 
 ## 2.0.1
-- 默认关闭严格输出校验，避免正常消息被误撤回；仅在开启 `guardStrictOutputOnly` 时才校验格式。
-- 更新 README 说明严格模式用途与默认行为。
+- 默认关闭严格输出校验，避免普通消息被误撤回；仅在开启 `guardStrictOutputOnly` 时校验格式。
+- README 补充严格模式的用途与默认值。
 
 ## 2.0.0
-- 新增严格输出模式，可拦截不符合 `<output><message>…</message></output>` 的回复。
-- 扩展默认禁用正则（<status>/<output>/<analysis>/<system> 等标签，think/json/yaml 代码块）。
+- 新增严格输出模式，只允许 `<output><message>…</message></output>` 结构的回复。
+- 扩展默认拦截：`<status>/<output>/<analysis>/<system>` 标签以及 think/json/yaml 代码块等。
 
 ## 1.x
-- 基础功能：查看 chatluna-character 最近一次 `<think>`，支持关键词/命令。
+- 初版：查看 chatluna-character 最近的 `<think>`，支持关键词/指令。

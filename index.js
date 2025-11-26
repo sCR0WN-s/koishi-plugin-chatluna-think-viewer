@@ -23,8 +23,8 @@ const defaultForbidden = [
   '(?:memory|记忆|记忆点|总结)\\s*[:=]',
 ];
 
-// 严格 <output><message>... 结构：允许文本 / <at>user_id</at> 文本 / <sticker>url</sticker>
-// 1~5 条 message，@ 仅允许数字 user_id
+// 严格 <output><message>... 结构：允许文�?/ <at>user_id</at> 文本 / <sticker>url</sticker>
+// ������ 1~5 �� <message>��@ ֻ���ܴ����ֵ� user_id
 const strictOutputPattern =
   '^\\s*<output>\\s*(<message>(?:<at>\\d+<\\/at>\\s*)?(?:<sticker>[^<]*<\\/sticker>|[^<]*)<\\/message>\\s*){1,5}<\\/output>\\s*$';
 
