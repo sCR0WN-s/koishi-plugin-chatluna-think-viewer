@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-chatluna-think-viewer",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "main": "index.js",
   "description": "View chatluna <think> blocks and auto recall abnormal formatted replies.",
   "license": "MIT",

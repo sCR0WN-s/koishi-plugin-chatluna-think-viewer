@@ -174,7 +174,7 @@ function compileRegex(list) {
     .filter(Boolean);
 }
 
-function detectAbnormal(text, forbidden, allowed) {
+function detectAbnormal(text, forbidden, allowed, strictMode = false) {
   if (!text) return null;
   for (const re of forbidden) {
     if (re.test(text)) return `\u547d\u4e2d\u7981\u6b62\u6a21\u5f0f: /${re.source}/`;

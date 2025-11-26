@@ -6,7 +6,7 @@
 - 依赖 `chatluna-character` 存储的思考上下文，支持命令与前缀关键词调用。
 - 支持群聊使用（可配置是否允许私聊）。
 - **异常格式自动撤回/拦截**：默认检测 `<think>`、`<status>`、`<output>`、`<analysis>`、`<system>` 等块或调试 JSON、think/json/yaml 代码块；命中后可选择先发后撤回(recall)或直接阻止(block)。
-- **严格输出模式（小白化）**：可选仅允许 `<output><message>…</message></output>` 结构；@ 仅允许数字 user_id，1~5 条 message，不符合即拦截/撤回。
+- **严格输出模式（可选）**：仅当开启 `guardStrictOutputOnly` 时，要求 `<output><message>…</message></output>` 结构；@ 仅允许数字 user_id，1~5 条 message。不开启则不做白名单校验，避免正常消息被误撤回。
 
 ## 安装
 ```bash
@@ -28,7 +28,7 @@ plugins:
     guardEnabled: true
     guardMode: recall   # recall | block
     guardDelay: 1       # 撤回延迟（秒），block 模式忽略
-    guardStrictOutputOnly: true        # 只允许 <output><message>…</message></output>
+    guardStrictOutputOnly: false       # 默认关闭严格模式，避免误撤回
     guardStrictPattern: '^\s*<output>\s*(<message>(?:<at>\d+<\/at>\s*)?(?:<sticker>[^<]*<\/sticker>|[^<]*)<\/message>\s*){1,5}<\/output>\s*$'
     guardForbiddenPatterns:
       - '<think>[\\s\\S]*?<\\/think>'
