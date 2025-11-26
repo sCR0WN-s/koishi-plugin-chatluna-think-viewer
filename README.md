@@ -6,11 +6,11 @@
 - 依赖 `chatluna-character` 存储的思考上下文，支持命令与前缀关键词调用。
 - 支持群聊使用（可配置是否允许私聊）。
 - **异常格式自动撤回/拦截**：默认检测 `<think>`、`<status>`、`<output>`、`<analysis>`、`<system>` 等块或调试 JSON、think/json/yaml 代码块；命中后可选择先发后撤回(recall)或直接阻止(block)。
-- **严格输出模式（可选）**：仅当开启 `guardStrictOutputOnly` 时，要求 `<output><message>…</message></output>` 结构；@ 仅允许数字 user_id，1~5 条 message。不开启则不做白名单校验，避免正常消息被误撤回。
+- **关键词模式**（默认开启）：`guardKeywordMode=true` 时按不区分大小写的子串匹配拦截；想用正则可把它关掉。
+- **严格输出模式**（可选）：仅当开启 `guardStrictOutputOnly` 时，要求 `<output><message>…</message></output>` 结构；@ 仅允许数字 user_id，1~5 条 message。默认关闭以避免误撤回。
 
 ## 安装
 ```bash
-# Koishi 控制台市场搜索 chatluna-think-viewer 安装
 npm install koishi-plugin-chatluna-think-viewer
 ```
 
@@ -24,21 +24,22 @@ plugins:
       - 查看思考
     allowPrivate: false
     emptyMessage: 暂时没有可用的思考记录。
-    # 异常撤回/拦截
+    # 守卫配置
     guardEnabled: true
     guardMode: recall   # recall | block
     guardDelay: 1       # 撤回延迟（秒），block 模式忽略
-    guardStrictOutputOnly: false       # 默认关闭严格模式，避免误撤回
-    guardStrictPattern: '^\s*<output>\s*(<message>(?:<at>\d+<\/at>\s*)?(?:<sticker>[^<]*<\/sticker>|[^<]*)<\/message>\s*){1,5}<\/output>\s*$'
+    guardKeywordMode: true           # 子串匹配关键词（默认）
+    guardStrictOutputOnly: false     # 严格格式校验默认关闭
     guardForbiddenPatterns:
-      - '<think>[\\s\\S]*?<\\/think>'
-      - '<status>[\\s\\S]*?<\\/status>'
-      - '```\\s*think[\\s\\S]*?```'
+      - '<think>'
+      - '<status>'
+      - '<output>'
+      - '```think'
 ```
 
 ## 使用
 - 群聊里发送 `think` 或配置的关键词查看最近一次 `<think>` 内容；`think 2` 查看倒数第 2 条。
-- 异常/严格模式：当 bot 发送的消息命中禁用规则或不符合严格输出结构时，记录日志并撤回（或直接阻止发送）。
+- 守卫：当 bot 发送的消息命中禁用规则（或在你开启严格模式时不符合格式）会记录日志并阻止/撤回发送。
 
 ## 依赖
 - koishi >= 4.18.0

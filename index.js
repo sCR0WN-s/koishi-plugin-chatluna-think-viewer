@@ -42,6 +42,7 @@ const Config = Schema.intersect([
     guardDelay: Schema.number().default(1).min(0).max(60).description('\u64a4\u56de\u5ef6\u8fdf\uff08\u79d2\uff09'),
     guardAllowPrivate: Schema.boolean().default(true).description('\u662f\u5426\u5728\u79c1\u804a\u4e2d\u4e5f\u542f\u7528\u62e6\u622a'),
     guardGroups: Schema.array(Schema.string()).default([]).description('\u53ea\u5728\u8fd9\u4e9b\u7fa4\u751f\u6548\uff0c\u7559\u7a7a\u8868\u793a\u5168\u90e8'),
+    guardKeywordMode: Schema.boolean().default(true).description('true \u65f6\u6309\u5173\u952e\u8bcd\u5b50\u4e32\u5339\u914d（\u4e0d\u533a\u5206\u5927\u5c0f\u5199）\uff0cfalse \u65f6\u6309\u6b63\u5219\u5339\u914d'),
     guardForbiddenPatterns: Schema.array(Schema.string())
       .default(defaultForbidden)
       .description('\u547d\u4e2d\u5373\u89c6\u4e3a\u5f02\u5e38\u7684\u6a21\u5f0f\uff0c\u7528\u4e8e\u907f\u514d\u601d\u8003\u6cc4\u9732\u6216\u0020\u004a\u0053\u004f\u004e\u0020\u751f\u51fa'),
@@ -162,11 +163,17 @@ function getLatestRawThink(temp) {
   return '';
 }
 
-function compileRegex(list) {
+function compileMatchers(list, keywordMode = true) {
   return (list || [])
     .map((p) => {
+      const source = String(p || '');
+      if (keywordMode) {
+        const needle = source.toLowerCase();
+        return { test: (text = '') => text.toLowerCase().includes(needle) };
+      }
       try {
-        return new RegExp(p, 'i');
+        const re = new RegExp(source, 'i');
+        return { test: (text = '') => re.test(text) };
       } catch (err) {
         return null;
       }
@@ -176,11 +183,17 @@ function compileRegex(list) {
 
 function detectAbnormal(text, forbidden, allowed, strictMode = false) {
   if (!text) return null;
-  for (const re of forbidden) {
-    if (re.test(text)) return `\u547d\u4e2d\u7981\u6b62\u6a21\u5f0f: /${re.source}/`;
+  for (const m of forbidden) {
+    if (m.test(text)) return '??????';
   }
-  if (allowed.length && !allowed.some((re) => re.test(text))) {
-    return '\u672a\u5339\u914d\u4efb\u4f55\u5141\u8bb8\u6a21\u5f0f';
+  if (strictMode) {
+    if (!allowed.length || !allowed.some((m) => m.test(text))) {
+      return '?????????';
+    }
+    return null;
+  }
+  if (allowed.length && !allowed.some((m) => m.test(text))) {
+    return '?????????';
   }
   return null;
 }
@@ -204,10 +217,12 @@ function shouldGuard(config, options) {
 function applyGuard(ctx, config) {
   if (!config.guardEnabled) return;
   const logger = ctx.logger(`${name}:guard`);
-  const forbidden = compileRegex(config.guardForbiddenPatterns);
-  const allowed = config.guardStrictOutputOnly
-    ? compileRegex([config.guardStrictPattern || strictOutputPattern])
-    : compileRegex(config.guardAllowedPatterns);
+  const strictMode = !!config.guardStrictOutputOnly;
+  const keywordMode = config.guardKeywordMode !== false;
+  const forbidden = compileMatchers(config.guardForbiddenPatterns, keywordMode);
+  const allowed = strictMode
+    ? compileMatchers([config.guardStrictPattern || strictOutputPattern], false)
+    : compileMatchers(config.guardAllowedPatterns, keywordMode);
   const original = Bot.prototype.sendMessage;
 
   Bot.prototype.sendMessage = async function patched(channelId, content, referrer, options = {}) {
