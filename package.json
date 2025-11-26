@@ -1,43 +1,20 @@
-{
-    "name":  "koishi-plugin-chatluna-think-viewer",
-    "version":  "2.2.1",
-    "main":  "index.js",
-    "description":  "通过命令/关键词查看 chatluna-character 最近一次回复的 \u003cthink\u003e 思考内容，并在消息格式异常时自动拦截/撤回。",
-    "license":  "MIT",
-    "keywords":  [
-                     "koishi",
-                     "chatluna",
-                     "character",
-                     "think",
-                     "recall",
-                     "guard",
-                     "moderation"
-                 ],
-    "homepage":  "https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer",
-    "repository":  {
-                       "type":  "git",
-                       "url":  "git+https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer.git"
-                   },
-    "contributors":  [
-                         "sCR0WN-s \u003c2892511968@qq.com\u003e"
-                     ],
-    "peerDependencies":  {
-                             "koishi":  "^4.18.0",
-                             "koishi-plugin-chatluna-character":  "^0.0.180"
-                         },
-    "koishi":  {
-                   "description":  {
-                                       "zh":  "通过命令/关键词查看 chatluna-character 最近一次回复的 \u003cthink\u003e 思考内容，并在消息格式异常时自动拦截/撤回。",
-                                       "en":  "View \u003cthink\u003e blocks from chatluna-character and auto recall/guard malformed replies."
-                                   },
-                   "service":  {
-                                   "required":  [
-                                                    "chatluna_character"
-                                                ]
-                               }
-               },
-    "files":  [
-                  "index.js",
-                  "README.md"
-              ]
+﻿{
+  "name": "koishi-plugin-chatluna-think-viewer",
+  "version": "2.2.2",
+  "main": "index.js",
+  "description": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容，并在消息格式异常时自动拦截/撤回。",
+  "license": "MIT",
+  "keywords": ["koishi","chatluna","character","think","recall","guard","moderation"],
+  "homepage": "https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer",
+  "repository": {"type": "git","url": "git+https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer.git"},
+  "contributors": ["sCR0WN-s <2892511968@qq.com>"],
+  "peerDependencies": {"koishi": "^4.18.0","koishi-plugin-chatluna-character": "^0.0.180"},
+  "koishi": {
+    "description": {
+      "zh": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容，并在消息格式异常时自动拦截/撤回。",
+      "en": "View <think> blocks from chatluna-character and auto recall/guard malformed replies."
+    },
+    "service": {"required": ["chatluna_character"]}
+  },
+  "files": ["index.js","README.md"]
 }
