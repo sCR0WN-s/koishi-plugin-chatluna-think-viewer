@@ -2,7 +2,7 @@
   "name": "koishi-plugin-chatluna-think-viewer",
   "version": "2.2.4",
   "main": "index.js",
-  "description": "閫氳繃鍛戒护/鍏抽敭璇嶆煡鐪?chatluna-character 鏈€杩戜竴娆″洖澶嶇殑 <think> 鎬濊€冨唴瀹癸紝骞跺湪娑堟伅鏍煎紡寮傚父鏃惰嚜鍔ㄦ嫤鎴?鎾ゅ洖銆?,
+  "description": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容，并在消息格式异常时自动拦截/撤回。",
   "license": "MIT",
   "keywords": ["koishi","chatluna","character","think","recall","guard","moderation"],
   "homepage": "https://github.com/sCR0WN-s/koishi-plugin-chatluna-think-viewer",
@@ -11,7 +11,7 @@
   "peerDependencies": {"koishi": "^4.18.0","koishi-plugin-chatluna-character": "^0.0.180"},
   "koishi": {
     "description": {
-      "zh": "閫氳繃鍛戒护/鍏抽敭璇嶆煡鐪?chatluna-character 鏈€杩戜竴娆″洖澶嶇殑 <think> 鎬濊€冨唴瀹癸紝骞跺湪娑堟伅鏍煎紡寮傚父鏃惰嚜鍔ㄦ嫤鎴?鎾ゅ洖銆?,
+      "zh": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容，并在消息格式异常时自动拦截/撤回。",
       "en": "View <think> blocks from chatluna-character and auto recall/guard malformed replies."
     },
     "service": {"required": ["chatluna_character"]}
