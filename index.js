@@ -324,6 +324,38 @@ function apply(ctx, config) {
 
   // \u5f02\u5e38\u8f93\u51fa\u81ea\u52a8\u5904\u7406
   applyGuard(ctx, config);
+
+  // Hot-fix chatluna-character completionMessages trimming bug:
+  // it used to drop newest messages; we wrap getTemp to trim from the head.
+  const service = ctx.chatluna_character;
+  if (service && typeof service.getTemp === 'function') {
+    const originalGetTemp = service.getTemp.bind(service);
+    service.getTemp = async function patchedGetTemp(session) {
+      const temp = await originalGetTemp(session);
+      const limit = () => {
+        const c = service._config?.modelCompletionCount ?? 3;
+        return Math.max(2, c * 2);
+      };
+      if (Array.isArray(temp.completionMessages) && !temp.completionMessages._thinkViewerPatched) {
+        const arr = temp.completionMessages;
+        const originalPush = arr.push;
+        arr.push = function patchedPush(...args) {
+          const res = originalPush.apply(this, args);
+          const max = limit();
+          if (this.length > max) {
+            this.splice(0, this.length - max);
+          }
+          return res;
+        };
+        Object.defineProperty(arr, '_thinkViewerPatched', { value: true, enumerable: false });
+      }
+      return temp;
+    };
+
+    ctx.on('dispose', () => {
+      service.getTemp = originalGetTemp;
+    });
+  }
 }
 
 module.exports = {

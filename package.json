@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-chatluna-think-viewer",
-  "version": "2.2.5",
+  "version": "2.2.6",
   "main": "index.js",
   "description": "通过命令/关键词查看 chatluna-character 最近一次回复的 <think> 思考内容，并在消息格式异常时自动拦截/撤回。",
   "license": "MIT",
