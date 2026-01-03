@@ -1,4 +1,4 @@
-﻿# koishi-plugin-chatluna-think-viewer
+# koishi-plugin-chatluna-think-viewer
 
 通过指令或关键词查看 `chatluna-character` 最近一次回复里的 `<think>` 思考内容，并提供输出拦截/撤回保护，防止模型把内部思考或异常格式直接发到群里。
 
@@ -45,4 +45,3 @@ plugins:
 
 ## 许可证
 MIT
-
