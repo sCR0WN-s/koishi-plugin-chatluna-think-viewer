@@ -41,7 +41,7 @@ plugins:
 
 ## 依赖
 - koishi >= 4.18.0
-- koishi-plugin-chatluna-character >= 0.0.180
+- koishi-plugin-chatluna-character (所有版本)
 
 ## 许可证
 MIT
